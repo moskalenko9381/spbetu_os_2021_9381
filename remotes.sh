@@ -1,1 +1,21 @@
+git remote add TheLifes08                https://github.com/TheLifes08/spbetu_os_2021_9381.git         # Колованов
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
+#git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
 #git remote add                           https://github.com//spbetu_os_2021_9381.git                  # 
