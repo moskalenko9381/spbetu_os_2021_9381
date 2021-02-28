@@ -31,12 +31,16 @@ BYTE_TO_HEX PROC near
             xchg AL,AH
             mov CL,4
             shr AL,CL
-            call TETR_TO_HEX ;            pop CX ;bash: в: command not found
+            call TETR_TO_HEX 
+            pop CX 
             ret
         BYTE_TO_HEX ENDP
 
         WRD_TO_HEX PROC near
-        ;_TO_HEX
+        ;   в AX - число, DI - адрес последнего символа
+            push BX
+            mov BH,AH
+            call BYTE_TO_HEX
             mov [DI],AH
             dec DI
             mov [DI],AL
@@ -126,7 +130,6 @@ END_:
     stosb
     jmp READ
 
-
 READING_PATH:
      lea dx, PATH_MESSAGE
      call PRINT
@@ -151,4 +154,3 @@ CYCLE_PATH:
 	int 21h
   TESTPC ENDS
       END START
-
