@@ -1,41 +1,44 @@
-ASSUME CS: CODE, DS: DATA, SS: SSTACK
-
-SSTACK SEGMENT STACK
-	DW 64 DUP(?)
-SSTACK ENDS
-
-DATA SEGMENT
-	Not_loaded db "Interruption not loaded.", 0Dh, 0Ah, '$'
-	Restored db "Interruption was restored.", 0Dh, 0Ah, '$'
-	Loaded db "The interrupt is loaded.", 0Dh, 0Ah, '$'
-	Load_process db "Interruption is loading now.", 0Dh, 0Ah, '$'
-DATA ENDS
-
-CODE SEGMENT
+LB4 SEGMENT
+	ASSUME CS:LB4, DS:DATA, SS:STACK
 
 NEW_INTERRUPTION PROC FAR
-	jmp START
-	PSP_1 dw 0                           				  ; 3
-	PSP_2 dw 0	                         				  ; 5
-	KEEP_CS dw 0                                  ; 7 segment storage
-	KEEP_IP dw 0                                  ; 9  storing the interrupt offset
-	INTERRUPTION_SET dw 0FEDCh                 		; 11
-	INT_COUNT db 'Interrupts call count: 0000  $' ; 13
+	jmp START_FUNC
 
-START:
+	PSP_ADDRESS_0 dw 0
+	PSP_ADDRESS_1 dw 0
+	KEEP_CS dw 0
+	KEEP_IP dw 0
+	NEW_INTERRUPTION_SET dw 0FEDCh
+	INT_COUNT db 'Interrupts call count: 0000  $'
+
+	KEEP_SS dw ?
+	KEEP_SP dw ?
+	KEEP_AX dw ?
+	INT_STACK dw 64 dup (?)
+	END_INT_STACK dw ?
+
+START_FUNC:
+
+	mov KEEP_SS, ss
+	mov KEEP_SP, sp
+	mov KEEP_AX, ax
+	mov ax, cs
+	mov ss, ax
+	mov sp, offset END_INT_STACK
+
 	push ax
 	push bx
 	push cx
 	push dx
 
-	mov ah, 3h			; read the position of cursor
-	mov bh, 0h
-	int 10h					; print the information about interrupt
+	mov ah, 03h
+	mov bh, 00h
+	int 10h
 	push dx
 
-	mov ah, 2h
-	mov bh, 0h
-	mov dx, 220h
+	mov ah, 02h
+	mov bh, 00h
+	mov dx, 0220h
 	int 10h
 
 	push si
@@ -43,7 +46,7 @@ START:
 	push ds
 	mov ax, SEG INT_COUNT
 	mov ds, ax
-	lea si, INT_COUNT
+	mov si, offset INT_COUNT
 	add si, 1Ah
 
 	mov ah,[si]
@@ -54,51 +57,51 @@ START:
 	mov ah, 30h
 	mov [si], ah
 
-	mov bh, [si-1]
+	mov bh, [si - 1]
 	inc bh
-	mov [si-1], bh
+	mov [si - 1], bh
 	cmp bh, 3Ah
 	jne END_CALC
 	mov bh, 30h
-	mov [si-1], bh
+	mov [si - 1], bh
 
-	mov ch, [si-2]
+	mov ch, [si - 2]
 	inc ch
-	mov [si-2], ch
+	mov [si - 2], ch
 	cmp ch, 3Ah
 	jne END_CALC
 	mov ch, 30h
-	mov [si-2], ch
+	mov [si - 2], ch
 
-	mov dh, [si-3]
+	mov dh, [si - 3]
 	inc dh
-	mov [si-3], dh
+	mov [si - 3], dh
 	cmp dh, 3Ah
 	jne END_CALC
 	mov dh, 30h
-	mov [si-3],dh
+	mov [si - 3],dh
 
 END_CALC:
-  pop ds
-  pop cx
+    pop ds
+    pop cx
 	pop si
 
 	push es
-	push bp
-	mov ax, SEG INT_COUNT
-	mov es, ax
-	lea ax, INT_COUNT
-	mov bp, ax
-	mov ah, 13h
-	mov al, 0h
-	mov cx, 1Dh
-	mov bh, 0
-	int 10h
-
-	pop bp
+		push bp
+			mov ax, SEG INT_COUNT
+			mov es, ax
+			mov ax, offset INT_COUNT
+			mov bp, ax
+			mov ah, 13h
+			mov al, 00h
+			mov cx, 1Dh
+			mov bh, 0
+			int 10h
+		pop bp
 	pop es
+
 	pop dx
-	mov ah, 2h
+	mov ah, 02h
 	mov bh, 0h
 	int 10h
 
@@ -106,14 +109,20 @@ END_CALC:
 	pop cx
 	pop bx
 	pop ax
+
+	mov ss, KEEP_SS
+	mov ax, KEEP_AX
+	mov sp, KEEP_SP
+	mov AL, 20H
+	out 20H, AL
+
 	iret
 NEW_INTERRUPTION ENDP
 
 NEED_MEM_AREA PROC
 NEED_MEM_AREA ENDP
 
-; check whether the interrupt vector is set
-CHECK_SETTING PROC NEAR
+IS_INTERRUPTION_SET PROC NEAR
 	push bx
 	push dx
 	push es
@@ -125,7 +134,7 @@ CHECK_SETTING PROC NEAR
 	mov dx, es:[bx + 11]
 	cmp dx, 0FEDCh
 	je INT_IS_SET
-	mov al, 0h
+	mov al, 00h
 	jmp POP_REG
 
 INT_IS_SET:
@@ -138,16 +147,15 @@ POP_REG:
 	pop bx
 
 	ret
-CHECK_SETTING ENDP
+IS_INTERRUPTION_SET ENDP
 
-; load or unload (checking  \un)
-CHECK_LOAD PROC NEAR
+CHECK_COMMAND_PROMT PROC NEAR
 	push es
 
-	mov ax, PSP_1
+	mov ax, PSP_ADDRESS_0
 	mov es, ax
 
-	mov bx, 82h
+	mov bx, 0082h
 
 	mov al, es:[bx]
 	inc bx
@@ -169,10 +177,10 @@ NULL_CMD:
 	pop es
 
 	ret
-CHECK_LOAD ENDP
+CHECK_COMMAND_PROMT ENDP
 
-LOAD_INTERRUPTION PROC NEAR  ;loading new interrupt handlers
-  push ax
+LOAD_INTERRUPTION PROC NEAR
+	push ax
 	push bx
 	push dx
 	push es
@@ -185,17 +193,17 @@ LOAD_INTERRUPTION PROC NEAR  ;loading new interrupt handlers
 	mov KEEP_CS, es
 
 	push ds
-	lea dx, NEW_INTERRUPTION     ;offset for the procedure in dx
-	mov ax, seg NEW_INTERRUPTION ; segment of the procedure
-	mov ds, ax
+		mov dx, offset NEW_INTERRUPTION
+		mov ax, seg NEW_INTERRUPTION
+		mov ds, ax
 
-	mov ah, 25h									; setting the vector
-	mov al, 1Ch									; number of the vector
-	int 21h											; changing the interrupt
+		mov ah, 25h
+		mov al, 1Ch
+		int 21h
 	pop ds
 
-	lea dx, Load_process
-	call PRINT
+	mov dx, offset Load_process
+	call PRINT_STRING
 
 	pop es
 	pop dx
@@ -217,22 +225,24 @@ UNLOAD_INTERRUPTION PROC NEAR
 
 	cli
 	push ds
-	mov dx, es:[bx + 9]
-	mov ax, es:[bx + 7]
-	mov ds, ax
-	mov ah, 25h
-	mov al, 1Ch
-	int 21h
+		mov dx, es:[bx + 9]
+		mov ax, es:[bx + 7]
+
+		mov ds, ax
+		mov ah, 25h
+		mov al, 1Ch
+		int 21h
 	pop ds
 	sti
-	lea dx, Restored
-	call PRINT
+
+	mov dx, offset Restored
+	call PRINT_STRING
 
 	push es
-	mov cx, es:[bx + 3]
-	mov es, cx
-	mov ah, 49h
-	int 21h
+		mov cx, es:[bx + 3]
+		mov es, cx
+		mov ah, 49h
+		int 21h
 	pop es
 
 	mov cx, es:[bx + 5]
@@ -247,68 +257,78 @@ UNLOAD_INTERRUPTION PROC NEAR
 	ret
 UNLOAD_INTERRUPTION ENDP
 
-PRINT PROC NEAR			;write string
+PRINT_STRING PROC NEAR
 	push ax
-	mov ah, 9h
+	mov ah, 09h
 	int	21h
 	pop ax
 	ret
-PRINT ENDP
+PRINT_STRING ENDP
 
-MAIN_PR PROC FAR
-	mov bx, 2Ch
+MAIN_PROGRAM PROC FAR
+	mov bx, 02Ch
 	mov ax, [bx]
-	mov PSP_2, ax
-	mov PSP_1, ds
+	mov PSP_ADDRESS_1, ax
+	mov PSP_ADDRESS_0, ds
 	sub ax, ax
 	xor bx, bx
 
 	mov ax, DATA
 	mov ds, ax
 
-	call CHECK_LOAD   ;load or unload function (checking parameter)
-	cmp al, 1h
+	call CHECK_COMMAND_PROMT
+	cmp al, 01h
 	je UNLOAD_START
 
-	call CHECK_SETTING   ;checking vector
-	cmp al, 1h
-	jne INT_NOT_LOADED
+	call IS_INTERRUPTION_SET
+	cmp al, 01h
+	jne INTERRUPTI0N_IS_NOT_LOADED
 
-	lea dx, Loaded	; vector is set
-	call PRINT
-	jmp EXIT
+	mov dx, offset Loaded
+	call PRINT_STRING
+	jmp EXIT_PROGRAM
 
 	mov ah,4Ch
 	int 21h
 
-INT_NOT_LOADED:
+INTERRUPTI0N_IS_NOT_LOADED:
 	call LOAD_INTERRUPTION
 
-	lea dx, NEED_MEM_AREA
-	mov cl, 4h			; to the paragraphs
+	mov dx, offset NEED_MEM_AREA
+	mov cl, 04h
 	shr dx, cl
 	add dx, 1Bh
 
-	mov ax, 3100h			; leave the function resident in memory
+	mov ax, 3100h
 	int 21h
 
 UNLOAD_START:
-	call CHECK_SETTING
-	cmp al, 0h
-	je NOT_SET
+	call IS_INTERRUPTION_SET
+	cmp al, 00h
+	je INT_IS_NOT_SET
 	call UNLOAD_INTERRUPTION
-	jmp EXIT
+	jmp EXIT_PROGRAM
 
-NOT_SET:
-	lea dx, Not_loaded
-	call PRINT
-  jmp EXIT
+INT_IS_NOT_SET:
+	mov dx, offset Not_loaded
+	call PRINT_STRING
+    jmp EXIT_PROGRAM
 
-EXIT:
+EXIT_PROGRAM:
 	mov ah, 4Ch
 	int 21h
-MAIN_PR ENDP
+MAIN_PROGRAM ENDP
 
-CODE ENDS
+LB4 ENDS
+STACK SEGMENT STACK
+	db 64 DUP(?)
+STACK ENDS
 
-END MAIN_PR
+DATA SEGMENT
+	Not_loaded db "Interruption did not load!", 0dh, 0ah, '$'
+	Restored db "Interruption was restored!", 0dh, 0ah, '$'
+	Loaded db "Interruption has already loaded!", 0dh, 0ah, '$'
+	Load_process db "Interruption is loading now!", 0dh, 0ah, '$'
+DATA ENDS
+
+END MAIN_PROGRAM
